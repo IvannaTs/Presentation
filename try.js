@@ -1,9 +1,40 @@
 Init();
 
 //Mouse Wheel event : jQuery Mouse Wheel Plugin
-$('.pane,.scrzone').mousewheel(function (event) {
+$('.pane,.scrzone').on('wheel', function (event) {
 	event.preventDefault();
-	if ($ScrollState == false) { $ScrollState = true; if (event.deltaY < 0) { UpdateScreen('+'); } else if (event.deltaY > 0) { UpdateScreen('-'); } else { $ScrollState = false; } }
+	if ($ScrollState == false) { $ScrollState = true; if (event.originalEvent.deltaY < 0) { UpdateScreen('+'); } else if (event.originalEvent.deltaY > 0) { UpdateScreen('-'); } else { $ScrollState = false; } }
+});
+//Touch events
+var startX, startY;
+$('.pane,.scrzone').on('touchstart', function (event) {
+	startX = event.touches[0].clientX;
+	startY = event.touches[0].clientY;
+});
+
+$('.pane,.scrzone').on('touchmove', function (event) {
+	event.preventDefault();
+	var endX = event.touches[0].clientX;
+	var endY = event.touches[0].clientY;
+	var diffX = startX - endX;
+	var diffY = startY - endY;
+	if (Math.abs(diffX) > Math.abs(diffY)) {
+		if (diffX > 0) {
+			UpdateScreen('+');
+		} else {
+			UpdateScreen('-');
+		}
+	} else {
+		if (diffY > 0) {
+			UpdateScreen('+');
+		} else {
+			UpdateScreen('-');
+		}
+	}
+});
+
+$('.pane,.scrzone').on('touchend', function (event) {
+	$ScrollState = false;
 });
 
 //Init
@@ -17,8 +48,7 @@ function Init() {
 	$('.visible').removeClass('visible');
 	$('#Helper').html("Init()");//Helper
 }
-
-//ANIMATE
+/ANIMATE
 function UpdateScreen(operator) {
 	$ActualSlide = $CibleSlide;
 	if (operator == "+") { $CibleSlide = $ListSlides[$ListSlides.indexOf($ActualSlide) + 1]; } else { $CibleSlide = $ListSlides[$ListSlides.indexOf($ActualSlide) - 1]; }//Si + slide suivante / si - slide précédente
@@ -26,15 +56,4 @@ function UpdateScreen(operator) {
 	if (!$CibleSlide) { $ScrollState = false; $('#Helper').html("Break"); $CibleSlide = $ActualSlide; return; }//Arrete tout si pas de slide avant/après
 	$ActualSlideDOM = $('.pane[data-id=' + $ActualSlide + ']');
 	$CibleSlideDOM = $('.pane[data-id=' + $CibleSlide + ']');
-	//Scroll To : Greensock GSAP
-	if ($ActualSlideDOM.closest('.prt').find('.spane').length && (operator == "+" && $ActualSlideDOM.next('.pane').length || operator == "-" && $ActualSlideDOM.prev('.pane').length)) {
-		TweenMax.to($ActualSlideDOM.closest('.spane'), $ScrollSpeed, { scrollTo: '.pane[data-id=' + $CibleSlide + ']', ease: Power2.easeOut, onComplete: function () { $ScrollState = false; $CibleSlideDOM.addClass('visible'); } }); //Horizontal ou vertical
-	} else {
-		TweenMax.to(window, $ScrollSpeed, { scrollTo: '.pane[data-id=' + $CibleSlide + ']', ease: Power2.easeOut, onComplete: function () { $ScrollState = false; $CibleSlideDOM.addClass('visible'); } });//Normal
-	}
-}
-
-//Init() On Resize
-$(window).resize(function () {
-	Init();
-});
+//Scroll To : Greensock GSAP	
